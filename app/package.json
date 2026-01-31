@@ -1,0 +1,8 @@
+{
+  "devDependencies": {
+    "reload": "^3.4.2"
+  },
+  "scripts": {
+    "dev": "reload --port 3000"
+  }
+}
