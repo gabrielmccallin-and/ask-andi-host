@@ -20,12 +20,12 @@ const API_VERSION = 'v1alpha';
 const ENDPOINT_URL = `https://discoveryengine.googleapis.com/${API_VERSION}/projects/${PROJECT_NUMBER}/locations/global/collections/${COLLECTION}/engines/${ENGINE_ID}/servingConfigs/default_search:search`;
 
 // Types
-type DeepChatRequest = { messages: { role: string; text: string }[] };
+type ChatRequest = { messages: { role: string; text: string }[] };
 
 app.post('/api/chat', async (c) => {
   try {
-    // A. Parse DeepChat input
-    const body = await c.req.json<DeepChatRequest>();
+
+    const body = await c.req.json<ChatRequest>();
     const lastMessage = body.messages?.[body.messages.length - 1]?.text;
 
     if (!lastMessage) return c.json({ error: 'No query provided' }, 400);
@@ -33,9 +33,11 @@ app.post('/api/chat', async (c) => {
     const client = await auth.getClient();
     const accessToken = await client.getAccessToken();
 
-    const payload = {
+    const sessionPath = `projects/${PROJECT_NUMBER}/locations/global/collections/${COLLECTION}/engines/${ENGINE_ID}/sessions/-`;
+    const searchPayload = {
       query: lastMessage,
       pageSize: 10,
+      session: sessionPath,
       spellCorrectionSpec: { mode: "AUTO" },
       languageCode: "en-GB",
       userInfo: { timeZone: "Europe/London" },
@@ -44,28 +46,74 @@ app.post('/api/chat', async (c) => {
       }
     };
 
-    const response = await fetch(ENDPOINT_URL, {
+    const searchResponse = await fetch(ENDPOINT_URL, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken.token}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(searchPayload)
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
+    if (!searchResponse.ok) {
+      const errorText = await searchResponse.text();
       console.error('Google API Error:', errorText);
-      return c.json({ error: 'Upstream API Error' }, response.status as any);
+      return c.json({ error: 'Upstream API Error' }, searchResponse.status as any);
     }
 
-    const data = await response.json();
+    const searchData = await searchResponse.json();
 
-    // Since this is SEARCH, not Chat, we get a list of results. 
-    // We need to format them into a single text block for the chat bot to display.
-    const formattedResponse = formatSearchResults(data);
+      console.log('searchData:', searchData);
+    const formattedReferences = formatReferences(searchData);
 
-    return c.json({ text: formattedResponse });
+    // E. Extract session and queryId for summary
+    const session = searchData.sessionInfo?.name || null;
+    const queryId = searchData.sessionInfo?.queryId || null;
+
+      console.log('session:', session);
+      console.log('queryId:', queryId);
+
+    let responseText = '';
+    if (session && queryId) {
+      // F. Make the Answer (Summary) Request
+      const answerEndpoint = `https://discoveryengine.googleapis.com/${API_VERSION}/projects/${PROJECT_NUMBER}/locations/global/collections/${COLLECTION}/engines/${ENGINE_ID}/servingConfigs/default_search:answer`;
+      const answerPayload = {
+        query: { text: lastMessage, queryId },
+        session,
+        relatedQuestionsSpec: { enable: true },
+        answerGenerationSpec: {
+          ignoreAdversarialQuery: false,
+          ignoreNonAnswerSeekingQuery: false,
+          ignoreLowRelevantContent: false,
+          multimodalSpec: {},
+          includeCitations: true,
+          promptSpec: { preamble: 'Limit to 120 words, always mention work that AND Digital has done for clients, mention the client name and articulate the benefits. When talking about AND Digital, use "we" or "us". Look at the content of search results and the title and mention client names in them and link those to work done. Break the summary into 3 short paragraphs. Bold any client names, try to mention a client in each paragraph' },
+          modelSpec: { modelVersion: 'gemini-2.5-flash/answer_gen/v1' }
+        }
+      };
+      const answerResponse = await fetch(answerEndpoint, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken.token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(answerPayload)
+      });
+      if (answerResponse.ok) {
+        const answerData = await answerResponse.json();
+        responseText = answerData.answer.answerText || '';
+
+        console.log('answer text:', responseText);
+
+      } else {
+        const errorText = await answerResponse.text();
+        console.error('Answer API Error:', errorText);
+      }
+    }
+
+    return c.json({
+      text: responseText + '\n\n' + formattedReferences
+    });
 
   } catch (error) {
     console.error('Server Error:', error);
@@ -74,7 +122,7 @@ app.post('/api/chat', async (c) => {
 });
 
 // Helper: Turn search results into a chat-friendly string
-function formatSearchResults(data: any): string {
+function formatReferences(data: any): string {
   if (!data.results || data.results.length === 0) {
     return "I couldn't find any relevant retail case studies.";
   }
@@ -82,14 +130,15 @@ function formatSearchResults(data: any): string {
   // Map top 3 results to a readable string
   const summary = data.results.slice(0, 3).map((item: any) => {
     const title = item.document?.derivedStructData?.title || 'Untitled';
-    const snippet = item.document?.derivedStructData?.snippets?.[0]?.snippet || '';
-    const link = item.document?.derivedStructData?.link || '#';
-    
+    let link = item.document?.derivedStructData?.link || '#';
+    if (!link.endsWith('.html')) {
+      link = '#';
+    }
     // Markdown formatting for DeepChat
-    return `**[${title}](${link})**\n${snippet}\n`;
-  }).join('\n---\n\n');
+    return `**[${title}](${link})**\n`;
+  }).join('\n');
 
-  return `Here are some results I found:\n\n${summary}`;
+  return summary;
 }
 
 // Start Server

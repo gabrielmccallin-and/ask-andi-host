@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "dev": "tsx server.ts --watch"
+    "dev": "tsx watch server.ts"
   },
   "dependencies": {
     "@google-cloud/discoveryengine": "^2.5.2",
