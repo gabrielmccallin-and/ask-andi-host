@@ -1,15 +1,25 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { serve } from '@hono/node-server';
 import { GoogleAuth } from 'google-auth-library';
+import fs from 'fs';
 
 const app = new Hono();
 
 app.use('/*', cors());
 
+let credentials: any;
+
+if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
+  // Running on Vercel or with env var set
+  credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY);
+} else {
+  // Local development: read from file
+  credentials = JSON.parse(fs.readFileSync('./service-account-key.json', 'utf8'));
+}
+
 const auth = new GoogleAuth({
   scopes: 'https://www.googleapis.com/auth/cloud-platform',
-  keyFile: './service-account-key.json'
+  credentials
 });
 
 const PROJECT_NUMBER = '902310615421';
@@ -87,7 +97,7 @@ app.post('/api/chat', async (c) => {
           ignoreLowRelevantContent: false,
           multimodalSpec: {},
           includeCitations: true,
-          promptSpec: { preamble: 'Limit to 120 words, always mention work that AND Digital has done for clients, mention the client name and articulate the benefits. When talking about AND Digital, use "we" or "us". Look at the content of search results and the title and mention client names in them and link those to work done. Break the summary into 3 short paragraphs. Bold any client names, try to mention a client in each paragraph' },
+          promptSpec: { preamble: 'Limit to 120 words, always mention work that AND Digital has done for clients, mention the client name and articulate the benefits. When talking about AND Digital, use "we" or "us". Look at the content of search results and the title and mention client names in them and link those to work done. Break the summary into 3 short paragraphs. Bold any client names, try to mention a client in each paragraph, do not mention a client multiple times.' },
           modelSpec: { modelVersion: 'gemini-2.5-flash/answer_gen/v1' }
         }
       };
@@ -141,11 +151,20 @@ function formatReferences(data: any): string {
   return summary;
 }
 
-// Start Server
-const port = 4000;
-console.log(`Search Proxy running on port ${port}`);
 
-serve({
-  fetch: app.fetch,
-  port
-});
+
+// Vercel serverless function export
+export default app.fetch;
+
+// Local development: run server if not in Vercel
+if (!process.env.VERCEL) {
+  const port = process.env.PORT ? Number(process.env.PORT) : 4000;
+  // Dynamically import serve only when running locally
+  import('@hono/node-server').then(({ serve }) => {
+    console.log(`Hono server running locally on port ${port}`);
+    serve({
+      fetch: app.fetch,
+      port
+    });
+  });
+}
