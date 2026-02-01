@@ -154,8 +154,10 @@ function formatReferences(data: any): string {
 
 
 
-// Vercel serverless function export
-export default app.fetch;
+
+// Vercel serverless function export (Node.js compatible)
+import { handle } from 'hono/vercel';
+export default handle(app);
 
 // Local development: run server if not in Vercel
 if (!process.env.VERCEL) {
