@@ -12,6 +12,7 @@ let credentials: any;
 if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
   // Running on Vercel or with env var set
   credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY);
+  console.log('Loaded credentials from environment variable.');
 } else {
   // Local development: read from file
   credentials = JSON.parse(fs.readFileSync('./service-account-key.json', 'utf8'));
