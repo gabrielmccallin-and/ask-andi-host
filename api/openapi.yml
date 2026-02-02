@@ -1,0 +1,40 @@
+openapi: 3.0.0
+info:
+  title: Ask ANDi
+  version: 1.0.0
+  description: ""
+servers:
+  - url: https://ask-andi-host.vercel.app
+paths:
+  /api/chat:
+    post:
+      summary: /api/chat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                messages:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      role:
+                        type: string
+                        description: The role of the message sender (e.g., "user")
+                      text:
+                        type: string
+                        description: The message content
+      responses:
+        "200":
+          description: Successful chat response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  text:
+                    type: string
+                    description: The chat response message
