@@ -11,11 +11,11 @@ type ChatRequest = { messages: { role: string; text: string }[] }
 app.post('/api/chat', async (c) => {
   try {
     const body = await c.req.json<ChatRequest>()
-    const lastMessage = body.messages?.[body.messages.length - 1]?.text
+    const queryText = body.messages?.[body.messages.length - 1]?.text
 
-    if (!lastMessage) return c.json({ error: 'No query provided' }, 400)
+    if (!queryText) return c.json({ error: 'No query provided' }, 400)
 
-    const response = await query()
+    const response = await query(queryText)
     return c.json({
       text: response,
     })
