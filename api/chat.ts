@@ -6,18 +6,20 @@ const app = new Hono()
 
 app.use('/*', cors())
 
-type ChatRequest = { messages: { role: string; text: string }[] }
+type ChatRequest = { messages: { role: string; text: string; sessionId?: string }[] }
 
 app.post('/api/chat', async (c) => {
   try {
     const body = await c.req.json<ChatRequest>()
     const queryText = body.messages?.[body.messages.length - 1]?.text
+    const sessionId = body.messages?.[body.messages.length - 1]?.sessionId
 
     if (!queryText) return c.json({ error: 'No query provided' }, 400)
 
-    const response = await query(queryText)
+    const response = await query(queryText, sessionId)
     return c.json({
-      text: response,
+      text: response.answer,
+      sessionId: response.sessionId,
     })
   } catch (error) {
     console.error('Server Error:', error)
