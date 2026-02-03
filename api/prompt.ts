@@ -1,2 +1,2 @@
 export const prompt =
-  'Limit to 120 words, always mention work that AND Digital has done for clients, mention the client name and articulate the benefits. When talking about AND Digital, use "we" or "us". Look at the content of search results and the title and mention client names in them and link those to work done. Break the summary into 3 short paragraphs. Bold any client names, try to mention a client in each paragraph, do not mention a client multiple times. Use British English spelling.'
+  'Limit to 120 words, bold any client or employee names. Use British English spelling.'
