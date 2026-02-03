@@ -30,6 +30,9 @@ paths:
                       sessionId:
                         type: string
                         description: The session ID for maintaining chat context
+                    required:
+                      - role
+                      - text
       responses:
         "200":
           description: Successful chat response

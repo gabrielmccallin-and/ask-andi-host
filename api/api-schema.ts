@@ -26,9 +26,9 @@ export interface paths {
                     "application/json": {
                         messages?: {
                             /** @description The role of the message sender (e.g., "user") */
-                            role?: string;
+                            role: string;
                             /** @description The message content */
-                            text?: string;
+                            text: string;
                             /** @description The session ID for maintaining chat context */
                             sessionId?: string;
                         }[];

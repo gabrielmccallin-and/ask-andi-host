@@ -27,29 +27,6 @@ app.post('/api/chat', async (c) => {
   }
 })
 
-// Helper: Turn search results into a chat-friendly string
-function formatReferences(data: any): string {
-  if (!data.results || data.results.length === 0) {
-    return "I couldn't find any relevant retail case studies."
-  }
-
-  // Map top 3 results to a readable string
-  const summary = data.results
-    .slice(0, 3)
-    .map((item: any) => {
-      const title = item.document?.derivedStructData?.title || 'Untitled'
-      let link = item.document?.derivedStructData?.link || '#'
-      if (!link.endsWith('.html')) {
-        link = '#'
-      }
-      // Markdown formatting for DeepChat
-      return `**[${title}](${link})**\n`
-    })
-    .join('\n')
-
-  return summary
-}
-
 // Vercel serverless function export (Node.js compatible)
 export default app
 
