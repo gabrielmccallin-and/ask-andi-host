@@ -29,6 +29,8 @@ export interface paths {
                             role?: string;
                             /** @description The message content */
                             text?: string;
+                            /** @description The session ID for maintaining chat context */
+                            sessionId?: string;
                         }[];
                     };
                 };
@@ -43,6 +45,8 @@ export interface paths {
                         "application/json": {
                             /** @description The chat response message */
                             text?: string;
+                            /** @description The session ID for maintaining chat context */
+                            sessionId?: string;
                         };
                     };
                 };

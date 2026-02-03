@@ -27,6 +27,9 @@ paths:
                       text:
                         type: string
                         description: The message content
+                      sessionId:
+                        type: string
+                        description: The session ID for maintaining chat context
       responses:
         "200":
           description: Successful chat response
@@ -38,3 +41,6 @@ paths:
                   text:
                     type: string
                     description: The chat response message
+                  sessionId:
+                    type: string
+                    description: The session ID for maintaining chat context
