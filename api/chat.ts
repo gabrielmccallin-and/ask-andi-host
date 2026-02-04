@@ -32,7 +32,7 @@ export default app
 
 // Local development: run server if not in Vercel
 if (!process.env.VERCEL) {
-  const port = process.env.PORT ? Number(process.env.PORT) : 4000
+  const port = process.env.PORT ? Number(process.env.PORT) : 8080
   // Dynamically import serve only when running locally
   import('@hono/node-server').then(({ serve }) => {
     console.log(`Hono server running locally on port ${port}`)
