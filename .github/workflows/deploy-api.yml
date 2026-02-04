@@ -20,7 +20,7 @@ jobs:
 
       - name: Write GCP service account key to file
         run: |
-          echo '${{ secrets.GCP_SA_KEY }}' > gcp-key.json
+          echo '${{ secrets.GCP_SA_KEY }}' > ./api/service-account-key.json
 
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
@@ -29,7 +29,7 @@ jobs:
 
       - name: Authenticate with service account key file
         run: |
-          gcloud auth activate-service-account --key-file gcp-key.json
+          gcloud auth activate-service-account --key-file ./api/service-account-key.json
 
       - name: Deploy to Cloud Run from source
         run: |
@@ -37,5 +37,4 @@ jobs:
           --source ./api \
           --region ${REGION} \
           --project ${PROJECT_ID} \
-          --set-env-vars=GOOGLE_SERVICE_ACCOUNT_KEY=${{ secrets.GCP_SA_KEY }} \
           --allow-unauthenticated
