@@ -7,5 +7,9 @@
   ],
   "version": "1.0.0",
   "description": "Root package for ask-andi-host monorepo",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "vitest": "^4.0.18"
+  }
 }

@@ -2,27 +2,19 @@ import { ConversationalSearchServiceClient } from '@google-cloud/discoveryengine
 import type { google } from '@google-cloud/discoveryengine/build/protos/protos.d.ts'
 import fs from 'fs'
 import { prompt } from './prompt'
+import { credentialHelper } from './credential-helper'
 
 const PROJECT_NUMBER = '902310615421'
 const ENGINE_ID = 'ask-andi-chatbot-simple_1769694487139'
 const COLLECTION = 'default_collection'
 const SESSION_RESOURCE_LOCATOR = `projects/${PROJECT_NUMBER}/locations/global/collections/${COLLECTION}/engines/${ENGINE_ID}/sessions/`
 
-let credentials: any
-
-if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
-  // Running on Vercel or with env var set
-  credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY)
-  console.log('Loaded credentials from environment variable.')
-} else {
-  // Local development: read from file
-  credentials = JSON.parse(fs.readFileSync('./service-account-key.json', 'utf8'))
-}
-
 export const query = async (queryText: string, sessionId?: string) => {
-  const client = new ConversationalSearchServiceClient({
-    credentials,
-  })
+  const credentials = credentialHelper(process.env)
+  const client =
+    credentials === ''
+      ? new ConversationalSearchServiceClient()
+      : new ConversationalSearchServiceClient({ credentials })
 
   // Build the request
   const request: google.cloud.discoveryengine.v1.IAnswerQueryRequest = {
