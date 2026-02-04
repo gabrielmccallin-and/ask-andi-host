@@ -1,0 +1,45 @@
+name: Deploy to Google Cloud Run
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      PROJECT_ID: ask-andi-chat-bot
+      SERVICE_NAME: ask-andi-api
+      REGION: europe-west2
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Write GCP service account key to file
+        run: |
+          echo "${{ secrets.GCP_SA_KEY }}" > gcp-key.json
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Authenticate with service account key file
+        run: |
+          gcloud auth activate-service-account --key-file gcp-key.json
+
+      - name: Deploy to Cloud Run from source
+        run: |
+          gcloud functions deploy ${FUNCTION_NAME} \
+          --gen2 \
+          --runtime nodejs20 \
+          --trigger-http \
+          --region ${REGION} \
+          --min-instances=1 \
+          --source ./api \
+          --project ${PROJECT_ID}
+          --set-env-vars "GOOGLE_SERVICE_ACCOUNT_KEY=${{ secrets.GCP_SA_KEY }}" \
+          --allow-unauthenticated

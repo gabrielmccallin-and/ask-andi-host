@@ -1,0 +1,11 @@
+{
+  "name": "ask-andi-host-root",
+  "private": true,
+  "workspaces": [
+    "api",
+    "app"
+  ],
+  "version": "1.0.0",
+  "description": "Root package for ask-andi-host monorepo",
+  "license": "MIT"
+}
