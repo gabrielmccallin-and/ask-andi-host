@@ -11,7 +11,7 @@ jobs:
       contents: read
     env:
       PROJECT_ID: ask-andi-chat-bot
-      FUNCTION_NAME: ask-andi-api
+      SERVICE_NAME: ask-andi-api
       REGION: europe-west2
 
     steps:
